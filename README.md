@@ -59,4 +59,4 @@ The icon is from the [IconMarketPK](https://www.flaticon.com/authors/iconmarketp
 
 MIT License
 
-Copyright (c) 2023 Shawn Baker
+Copyright © 2023 Shawn Baker
