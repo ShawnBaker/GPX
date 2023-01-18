@@ -18,11 +18,19 @@ namespace FrozenNorth.Gpx
 		/// <returns>A Gpx object, null if the file fails to load.</returns>
 		public static Gpx Load(string fileName)
 		{
+			if (string.IsNullOrEmpty(fileName) || !System.IO.File.Exists(fileName))
+			{
+				return null;
+			}
 			var gpx = new Gpx();
 			try
 			{
 				// save the file name
 				gpx.FileName= fileName;
+
+				// load the document
+				XmlDocument doc = new XmlDocument();
+				doc.Load(fileName);
 
 				// get the namespace
 				var gpxElement = XElement.Load(fileName);
@@ -31,13 +39,21 @@ namespace FrozenNorth.Gpx
 				{
 					xmlns = "http://www.topografix.com/GPX/1/1";
 				}
-
-				// load the document and namespace
-				var root = XElement.Load(fileName);
-				XmlDocument doc = new XmlDocument();
-				doc.Load(fileName);
 				ns = new XmlNamespaceManager(doc.NameTable);
 				ns.AddNamespace("ns", xmlns);
+
+				// add the extension namespaces
+				foreach (var attr in gpxElement.Attributes())
+				{
+					if (attr.IsNamespaceDeclaration && attr.Name.LocalName != "xmlns")
+					{
+						GpxNamespace newNs = new GpxNamespace();
+						newNs.Name = attr.Name.LocalName;
+						newNs.Value = attr.Value;
+						gpx.Namespaces.Add(newNs);
+						ns.AddNamespace(newNs.Name, newNs.Value);
+					}
+				}
 
 				// read the top level (gpx) node
 				var gpxNode = ReadGpx(doc, gpx);
@@ -131,6 +147,49 @@ namespace FrozenNorth.Gpx
 			return null;
 		}
 
+		private static GpxExtension ReadExtension(XmlNode node)
+		{
+			// add the extension namespaces
+			var extension = new GpxExtension();
+			var names = node.Name.Split(':');
+			extension.Prefix = names[0];
+			extension.Name = names[1];
+			extension.Value = node.InnerText;
+			foreach (XmlAttribute attr in node.Attributes)
+			{
+				if (attr.Name.ToLower().StartsWith("xmlns:"))
+				{
+					extension.Namespace = new GpxNamespace();
+					names = attr.Name.Split(':');
+					extension.Namespace.Name = names[1];
+					extension.Namespace.Value = attr.Value;
+				}
+			}
+			foreach (XmlNode childNode in node.ChildNodes)
+			{
+				if (!childNode.Name.StartsWith("#"))
+				{
+					extension.Children.Add(ReadExtension(childNode));
+				}
+			}
+			return extension;
+		}
+
+		private static bool ReadExtensions(XmlNode parentNode, GpxExtensions extensions)
+		{
+			extensions.Clear();
+			var node = parentNode.SelectSingleNode("ns:extensions", ns);
+			if (node != null)
+			{
+				foreach (XmlNode extNode in node.ChildNodes)
+				{
+					var ext = ReadExtension(extNode);
+					extensions.Add(ext);
+				}
+			}
+			return false;
+		}
+
 		private static GpxFix? ReadFix(XmlNode parentNode)
 		{
 			var fixNode = parentNode.SelectSingleNode("ns:fix", ns);
@@ -162,6 +221,7 @@ namespace FrozenNorth.Gpx
 			}
 			gpx.Version = ReadStringAttr(gpxNode, "version");
 			gpx.Creator = ReadStringAttr(gpxNode, "creator");
+			ReadExtensions(gpxNode, gpx.Extensions);
 			return gpxNode;
 		}
 
@@ -206,6 +266,7 @@ namespace FrozenNorth.Gpx
 				metadata.Time = ReadDateTime(node, "time");
 				metadata.Keywords = ReadString(node, "keywords");
 				metadata.Bounds = ReadBounds(node, "bounds");
+				ReadExtensions(node, metadata.Extensions);
 			}
 		}
 		private static GpxPerson ReadPerson(XmlNode parentNode, string name)
@@ -222,46 +283,48 @@ namespace FrozenNorth.Gpx
 			return null;
 		}
 
-		private static GpxPoint ReadPoint(XmlNode ptNode)
+		private static GpxPoint ReadPoint(XmlNode node)
 		{
 			var point = new GpxPoint();
-			point.Latitude = ReadDoubleAttr(ptNode, "lat");
-			point.Longitude = ReadDoubleAttr(ptNode, "lon");
-			point.Elevation = ReadDouble(ptNode, "ele");
-			point.Time = ReadDateTime(ptNode, "time");
-			point.MagneticVariation = ReadDouble(ptNode, "magvar");
-			point.GeoidHeight = ReadDouble(ptNode, "geoidheight");
-			point.Name = ReadString(ptNode, "name");
-			point.Comment = ReadString(ptNode, "cmt");
-			point.Description = ReadString(ptNode, "desc");
-			point.Source = ReadString(ptNode, "src");
-			ReadLinks(ptNode, point.Links);
-			point.SymbolName = ReadString(ptNode, "sym");
-			point.Type = ReadString(ptNode, "type");
-			point.Fix = ReadFix(ptNode);
-			point.NumSatellites = ReadUInt(ptNode, "sat");
-			point.Hdop = ReadDouble(ptNode, "hdop");
-			point.Pdop = ReadDouble(ptNode, "pdop");
-			point.Vdop = ReadDouble(ptNode, "vdop");
-			point.AgeOfDgpsData = ReadDouble(ptNode, "ageofdgpsdata");
-			point.DgpsId = ReadUInt(ptNode, "dgpsid");
+			point.Latitude = ReadDoubleAttr(node, "lat");
+			point.Longitude = ReadDoubleAttr(node, "lon");
+			point.Elevation = ReadDouble(node, "ele");
+			point.Time = ReadDateTime(node, "time");
+			point.MagneticVariation = ReadDouble(node, "magvar");
+			point.GeoidHeight = ReadDouble(node, "geoidheight");
+			point.Name = ReadString(node, "name");
+			point.Comment = ReadString(node, "cmt");
+			point.Description = ReadString(node, "desc");
+			point.Source = ReadString(node, "src");
+			ReadLinks(node, point.Links);
+			point.SymbolName = ReadString(node, "sym");
+			point.Type = ReadString(node, "type");
+			point.Fix = ReadFix(node);
+			point.NumSatellites = ReadUInt(node, "sat");
+			point.Hdop = ReadDouble(node, "hdop");
+			point.Pdop = ReadDouble(node, "pdop");
+			point.Vdop = ReadDouble(node, "vdop");
+			point.AgeOfDgpsData = ReadDouble(node, "ageofdgpsdata");
+			point.DgpsId = ReadUInt(node, "dgpsid");
+			ReadExtensions(node, point.Extensions);
 			return point;
 		}
 		
-		private static GpxRoute ReadRoute(XmlNode rteNode)
+		private static GpxRoute ReadRoute(XmlNode node)
 		{
 			var route = new GpxRoute();
-			route.Name= ReadString(rteNode, "name");
-			route.Comment = ReadString(rteNode, "cmt");
-			route.Description = ReadString(rteNode, "desc");
-			route.Source = ReadString(rteNode, "src");
-			ReadLinks(rteNode, route.Links);
-			route.Number = ReadUInt(rteNode, "number");
-			route.Type = ReadString(rteNode, "type");
-			var nodes = rteNode.SelectNodes("ns:rtept", ns);
-			foreach (XmlNode node in nodes)
+			route.Name= ReadString(node, "name");
+			route.Comment = ReadString(node, "cmt");
+			route.Description = ReadString(node, "desc");
+			route.Source = ReadString(node, "src");
+			ReadLinks(node, route.Links);
+			route.Number = ReadUInt(node, "number");
+			route.Type = ReadString(node, "type");
+			ReadExtensions(node, route.Extensions);
+			var nodes = node.SelectNodes("ns:rtept", ns);
+			foreach (XmlNode ptNode in nodes)
 			{
-				var point = ReadPoint(node);
+				var point = ReadPoint(ptNode);
 				route.Points.Add(point);
 			}
 			return route;
@@ -298,33 +361,35 @@ namespace FrozenNorth.Gpx
 			return null;
 		}
 
-		private static GpxTrack ReadTrack(XmlNode trkNode)
+		private static GpxTrack ReadTrack(XmlNode node)
 		{
 			var track = new GpxTrack();
-			track.Name = ReadString(trkNode, "name");
-			track.Comment = ReadString(trkNode, "cmt");
-			track.Description = ReadString(trkNode, "desc");
-			track.Source = ReadString(trkNode, "src");
-			ReadLinks(trkNode, track.Links);
-			track.Number = ReadUInt(trkNode, "number");
-			track.Type = ReadString(trkNode, "type");
-			var nodes = trkNode.SelectNodes("ns:trkseg", ns);
-			foreach (XmlNode node in nodes)
+			track.Name = ReadString(node, "name");
+			track.Comment = ReadString(node, "cmt");
+			track.Description = ReadString(node, "desc");
+			track.Source = ReadString(node, "src");
+			ReadLinks(node, track.Links);
+			track.Number = ReadUInt(node, "number");
+			track.Type = ReadString(node, "type");
+			ReadExtensions(node, track.Extensions);
+			var nodes = node.SelectNodes("ns:trkseg", ns);
+			foreach (XmlNode segNode in nodes)
 			{
-				var segment = ReadTrackSegment(node);
+				var segment = ReadTrackSegment(segNode);
 				segment.Track = track;
 				track.Segments.Add(segment);
 			}
 			return track;
 		}
 
-		private static GpxTrackSegment ReadTrackSegment(XmlNode trkNode)
+		private static GpxTrackSegment ReadTrackSegment(XmlNode node)
 		{
 			var segment = new GpxTrackSegment();
-			var nodes = trkNode.SelectNodes("ns:trkpt", ns);
-			foreach (XmlNode node in nodes)
+			ReadExtensions(node, segment.Extensions);
+			var nodes = node.SelectNodes("ns:trkpt", ns);
+			foreach (XmlNode ptNode in nodes)
 			{
-				var point = ReadPoint(node);
+				var point = ReadPoint(ptNode);
 				segment.Points.Add(point);
 			}
 			return segment;

@@ -28,6 +28,7 @@ namespace FrozenNorth.Gpx
 		public double? Pdop;
 		public double? AgeOfDgpsData;
 		public uint? DgpsId;
+		public GpxExtensions Extensions = new GpxExtensions();
 
 		/// <summary>
 		/// Creates an empty point.
