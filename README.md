@@ -43,12 +43,23 @@ GpxMetadata
 GpxPerson
 GpxPoint
 GpxPoints
+GpxReader
 GpxRoute
 GpxRoutes
 GpxTrack
 GpxTracks
 GpxTrackSegment
 GpxTrackSegments
+GpxWriter
+```
+
+# Usage
+
+```
+Gpx gpx = GpxReader.Load(fileName);
+...
+GpxWriter.Save(gpx, fileName);
+
 ```
 
 # Attributions
