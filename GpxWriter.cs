@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.InteropServices.ComTypes;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace FrozenNorth.Gpx
@@ -13,75 +16,149 @@ namespace FrozenNorth.Gpx
 		/// </summary>
 		public const string TimeFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
 
-		private static XmlWriter textWriter;
+		// local variables
+		private static XmlWriter xmlWriter;
 		private static Gpx gpx;
 
-		/// <summary>
-		/// Saves a GPX file.
-		/// </summary>
-		/// <param name="gpx">Gpx object containing the data to be saved.</param>
-		/// <param name="fileName">Full path and name of the GPX file.</param>
-		/// <returns>True if the file was successfully saved, false if not.</returns>
-		public static bool Save(Gpx gpx, string fileName)
-		{
-			if (gpx == null || string.IsNullOrEmpty(fileName))
-			{
-				return false;
-			}
-			try
-			{
-				GpxWriter.gpx = gpx;
-				XmlWriterSettings settings = new XmlWriterSettings()
-				{
-					Indent = true,
-					IndentChars = "\t"
-				};
-				textWriter = XmlTextWriter.Create(fileName, settings);
-				textWriter.WriteStartDocument();
-				textWriter.WriteStartElement("gpx", "http://www.topografix.com/GPX/1/1");
-				gpx.Version = "1.1";
-				WriteStringAttr("version", gpx.Version);
-				WriteStringAttr("creator", gpx.Creator);
-				foreach (var ns in gpx.Namespaces)
-				{
-					textWriter.WriteAttributeString(ns.Name, "http://www.w3.org/2000/xmlns/", ns.Value);
-				}
-				WriteMetadata(gpx.Metadata);
-				foreach (GpxRoute route in gpx.Routes)
-				{
-					WriteRoute(route);
-				}
-				foreach (GpxPoint point in gpx.Waypoints)
-				{
-					WritePoint("wpt", point);
-				}
-				foreach (GpxTrack track in gpx.Tracks)
-				{
-					WriteTrack(track);
-				}
-				WriteExtensions(gpx.Extensions);
-				textWriter.WriteEndElement();
-				textWriter.WriteEndDocument();
-				textWriter.Close();
-			}
-			catch
-			{
-				return false;
-			}
+        /// <summary>
+        /// Asynchronously saves a GPX file.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="fileName">Full path and name of the GPX file.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static async Task<bool> SaveAsync(Gpx gpx, string fileName)
+        {
+            return await Task.Run(() => Save(gpx, fileName));
+        }
 
-			return true;
-		}
+        /// <summary>
+        /// Asynchronously saves a GPX file to a stream.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="stream">Stream to write the XML to.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static async Task<bool> SaveAsync(Gpx gpx, Stream stream)
+        {
+            return await Task.Run(() => Save(gpx, stream));
+        }
+
+        /// <summary>
+        /// Asynchronously saves a GPX file to a TextWriter.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="writer">TextWriter to write the XML to.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static async Task<bool> SaveAsync(Gpx gpx, TextWriter writer)
+        {
+            return await Task.Run(() => Save(gpx, writer));
+        }
+
+        /// <summary>
+        /// Asynchronously saves a GPX file to a XmlWriter.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="writer">XmlWriter to write the XML to.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static async Task<bool> SaveAsync(Gpx gpx, XmlWriter writer)
+		{
+            return await Task.Run(() => Save(gpx, writer));
+        }
+
+        /// <summary>
+        /// Saves a GPX file.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="fileName">Full path and name of the GPX file.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static bool Save(Gpx gpx, string fileName)
+        {
+            return Save(gpx, XmlWriter.Create(fileName));
+        }
+
+        /// <summary>
+        /// Saves a GPX file to a stream.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="writer">Stream to write the XML to.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static bool Save(Gpx gpx, Stream stream)
+        {
+            return Save(gpx, XmlWriter.Create(stream));
+        }
+
+        /// <summary>
+        /// Saves a GPX file to a TextWriter.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="writer">TextWriter to write the XML to.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static bool Save(Gpx gpx, TextWriter writer)
+        {
+            return Save(gpx, XmlWriter.Create(writer));
+        }
+
+        /// <summary>
+        /// Saves a GPX file to a XmlWriter.
+        /// </summary>
+        /// <param name="gpx">Gpx object containing the data to be saved.</param>
+        /// <param name="writer">XmlWriter to write the XML to.</param>
+        /// <returns>True if the file was successfully saved, false if not.</returns>
+        public static bool Save(Gpx gpx, XmlWriter writer)
+        {
+            if (gpx == null || writer == null)
+            {
+                return false;
+            }
+            try
+            {
+                GpxWriter.gpx = gpx;
+                xmlWriter.Settings.Indent = true;
+                xmlWriter.Settings.IndentChars = "\t";
+                xmlWriter.WriteStartDocument();
+                xmlWriter.WriteStartElement("gpx", "http://www.topografix.com/GPX/1/1");
+                gpx.Version = "1.1";
+                WriteStringAttr("version", gpx.Version);
+                WriteStringAttr("creator", gpx.Creator);
+                foreach (var ns in gpx.Namespaces)
+                {
+                    xmlWriter.WriteAttributeString(ns.Name, "http://www.w3.org/2000/xmlns/", ns.Value);
+                }
+                WriteMetadata(gpx.Metadata);
+                foreach (GpxRoute route in gpx.Routes)
+                {
+                    WriteRoute(route);
+                }
+                foreach (GpxPoint point in gpx.Waypoints)
+                {
+                    WritePoint("wpt", point);
+                }
+                foreach (GpxTrack track in gpx.Tracks)
+                {
+                    WriteTrack(track);
+                }
+                WriteExtensions(gpx.Extensions);
+                xmlWriter.WriteEndElement();
+                xmlWriter.WriteEndDocument();
+                xmlWriter.Close();
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
+        }
 
 		private static void WriteBounds(string name, GpxBounds bounds)
 		{
 			if (bounds != null)
 			{
-				textWriter.WriteStartElement(name);
+				xmlWriter.WriteStartElement(name);
 				WriteDoubleAttr("minlat", bounds.MinLatitude);
 				WriteDoubleAttr("minlon", bounds.MinLongitude);
 				WriteDoubleAttr("maxlat", bounds.MaxLatitude);
 				WriteDoubleAttr("maxlon", bounds.MaxLongitude);
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -89,11 +166,11 @@ namespace FrozenNorth.Gpx
 		{
 			if (copyright != null && copyright.HasData)
 			{
-				textWriter.WriteStartElement(name);
+				xmlWriter.WriteStartElement(name);
 				WriteStringAttr("author", copyright.Author);
 				WriteString("year", copyright.Year);
 				WriteUri("license", copyright.Licence);
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -102,7 +179,7 @@ namespace FrozenNorth.Gpx
 			if (value != null)
 			{
 				string dt = value.Value.ToUniversalTime().ToString(TimeFormat);
-				textWriter.WriteElementString(name, dt);
+				xmlWriter.WriteElementString(name, dt);
 			}
 		}
 
@@ -110,7 +187,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (value != null)
 			{
-				textWriter.WriteElementString(name, value.ToString());
+				xmlWriter.WriteElementString(name, value.ToString());
 			}
 		}
 
@@ -118,7 +195,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (value != null)
 			{
-				textWriter.WriteAttributeString(name, value.ToString());
+				xmlWriter.WriteAttributeString(name, value.ToString());
 			}
 		}
 
@@ -126,10 +203,10 @@ namespace FrozenNorth.Gpx
 		{
 			if (email != null && email.HasData)
 			{
-				textWriter.WriteStartElement(name);
+				xmlWriter.WriteStartElement(name);
 				WriteStringAttr("id", email.Id);
 				WriteStringAttr("domain", email.Domain);
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -142,18 +219,18 @@ namespace FrozenNorth.Gpx
 					var names = extension.Name.Split(':');
 					if (extension.Namespace != null)
 					{
-						textWriter.WriteElementString(extension.Prefix, extension.Name, extension.Namespace.Value, extension.Value);
+						xmlWriter.WriteElementString(extension.Prefix, extension.Name, extension.Namespace.Value, extension.Value);
 					}
 					else if (extension.Prefix == ns.Name)
 					{
-						textWriter.WriteElementString(extension.Prefix, extension.Name, ns.Value, extension.Value);
+						xmlWriter.WriteElementString(extension.Prefix, extension.Name, ns.Value, extension.Value);
 					}
 					else
 					{
 						GpxNamespace gpxNs = gpx.Namespaces.Find(n => n.Name == extension.Prefix);
 						if (gpxNs != null)
 						{
-							textWriter.WriteElementString(extension.Prefix, extension.Name, gpxNs.Value, extension.Value);
+							xmlWriter.WriteElementString(extension.Prefix, extension.Name, gpxNs.Value, extension.Value);
 						}
 					}
 				}
@@ -162,40 +239,40 @@ namespace FrozenNorth.Gpx
 					var names = extension.Name.Split(':');
 					if (extension.Namespace != null)
 					{
-						textWriter.WriteStartElement(extension.Prefix, extension.Name, extension.Namespace.Value);
+						xmlWriter.WriteStartElement(extension.Prefix, extension.Name, extension.Namespace.Value);
 						ns = extension.Namespace;
 					}
 					else if (extension.Prefix == ns.Name)
 					{
-						textWriter.WriteStartElement(extension.Prefix, extension.Name, ns.Value);
+						xmlWriter.WriteStartElement(extension.Prefix, extension.Name, ns.Value);
 					}
 					else
 					{
 						GpxNamespace gpxNs = gpx.Namespaces.Find(n => n.Name == extension.Prefix);
 						if (gpxNs != null)
 						{
-							textWriter.WriteStartElement(extension.Prefix, extension.Name, gpxNs.Value);
+							xmlWriter.WriteStartElement(extension.Prefix, extension.Name, gpxNs.Value);
 						}
 					}
 					foreach (GpxExtension ext in extension.Children)
 					{
 						WriteExtension(ext, ns);
 					}
-					textWriter.WriteEndElement();
+					xmlWriter.WriteEndElement();
 				}
 			}
 		}
 
-		private static void WriteExtensions(GpxExtensions extensions)
+		private static void WriteExtensions(GpxExtensionList extensions)
 		{
 			if (extensions != null && extensions.Count > 0)
 			{
-				textWriter.WriteStartElement("extensions");
+				xmlWriter.WriteStartElement("extensions");
 				foreach (GpxExtension extension in extensions)
 				{
 					WriteExtension(extension, null);
 				}
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -222,7 +299,7 @@ namespace FrozenNorth.Gpx
 						str = "pps";
 						break;
 				}
-				textWriter.WriteElementString(name, str);
+				xmlWriter.WriteElementString(name, str);
 			}
 		}
 
@@ -230,15 +307,15 @@ namespace FrozenNorth.Gpx
 		{
 			if (link != null && link.HasData)
 			{
-				textWriter.WriteStartElement(name);
+				xmlWriter.WriteStartElement(name);
 				WriteUriAttr("href", link.Href);
 				WriteString("text", link.Text);
 				WriteString("type", link.Type);
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
-		private static void WriteLinks(string name, GpxLinks links)
+		private static void WriteLinks(string name, GpxLinkList links)
 		{
 			foreach (GpxLink link in links)
 			{
@@ -250,7 +327,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (metadata.HasData)
 			{
-				textWriter.WriteStartElement("metadata");
+				xmlWriter.WriteStartElement("metadata");
 				WriteString("name", metadata.Name);
 				WriteString("desc", metadata.Description);
 				WritePerson("author", metadata.Author);
@@ -260,7 +337,7 @@ namespace FrozenNorth.Gpx
 				WriteString("keywords", metadata.Keywords);
 				WriteBounds("bounds", metadata.Bounds);
 				WriteExtensions(metadata.Extensions);
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -268,17 +345,17 @@ namespace FrozenNorth.Gpx
 		{
 			if (person != null && person.HasData)
 			{
-				textWriter.WriteStartElement(name);
+				xmlWriter.WriteStartElement(name);
 				WriteString("name", person.Name);
 				WriteEmail("email", person.Email);
 				WriteLink("link", person.Link);
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
 		private static void WritePoint(string name, GpxPoint point)
 		{
-			textWriter.WriteStartElement(name);
+			xmlWriter.WriteStartElement(name);
 			WriteDoubleAttr("lat", point.Latitude);
 			WriteDoubleAttr("lon", point.Longitude);
 			WriteDouble("ele", point.Elevation);
@@ -300,14 +377,14 @@ namespace FrozenNorth.Gpx
 			WriteDouble("ageofdgpsdata", point.AgeOfDgpsData);
 			WriteUInt("dgpsid", point.DgpsId);
 			WriteExtensions(point.Extensions);
-			textWriter.WriteEndElement();
+			xmlWriter.WriteEndElement();
 		}
 
 		private static void WriteRoute(GpxRoute route)
 		{
 			if (route != null && route.HasData)
 			{
-				textWriter.WriteStartElement("rte");
+				xmlWriter.WriteStartElement("rte");
 				WriteString("name", route.Name);
 				WriteString("cmt", route.Comment);
 				WriteString("desc", route.Description);
@@ -320,7 +397,7 @@ namespace FrozenNorth.Gpx
 				{
 					WritePoint("rtept", point);
 				}
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -328,7 +405,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (str != null)
 			{
-				textWriter.WriteElementString(name, str);
+				xmlWriter.WriteElementString(name, str);
 			}
 		}
 
@@ -336,7 +413,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (str != null)
 			{
-				textWriter.WriteAttributeString(name, str);
+				xmlWriter.WriteAttributeString(name, str);
 			}
 		}
 
@@ -344,7 +421,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (track != null && track.HasData)
 			{
-				textWriter.WriteStartElement("trk");
+				xmlWriter.WriteStartElement("trk");
 				WriteString("name", track.Name);
 				WriteString("cmt", track.Comment);
 				WriteString("desc", track.Description);
@@ -358,15 +435,15 @@ namespace FrozenNorth.Gpx
 					WriteExtensions(segment.Extensions);
 					if (segment.Points.Count > 0)
 					{
-						textWriter.WriteStartElement("trkseg");
+						xmlWriter.WriteStartElement("trkseg");
 						foreach (GpxPoint point in segment.Points)
 						{
 							WritePoint("trkpt", point);
 						}
-						textWriter.WriteEndElement();
+						xmlWriter.WriteEndElement();
 					}
 				}
-				textWriter.WriteEndElement();
+				xmlWriter.WriteEndElement();
 			}
 		}
 
@@ -374,7 +451,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (value != null)
 			{
-				textWriter.WriteElementString(name, value.ToString());
+				xmlWriter.WriteElementString(name, value.ToString());
 			}
 		}
 
@@ -382,7 +459,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (uri != null)
 			{
-				textWriter.WriteElementString(name, uri.ToString());
+				xmlWriter.WriteElementString(name, uri.ToString());
 			}
 		}
 
@@ -390,7 +467,7 @@ namespace FrozenNorth.Gpx
 		{
 			if (uri != null)
 			{
-				textWriter.WriteAttributeString(name, uri.ToString());
+				xmlWriter.WriteAttributeString(name, uri.ToString());
 			}
 		}
 	}
