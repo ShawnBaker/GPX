@@ -1,6 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using System.Xml;
-using System.Xml.Linq;
 
 namespace FrozenNorth.Gpx
 {
@@ -11,71 +12,181 @@ namespace FrozenNorth.Gpx
 	{
 		private static XmlNamespaceManager ns;
 
-		/// <summary>
-		/// Loads a GPX file.
-		/// </summary>
-		/// <param name="fileName">Full path and name of the GPX file.</param>
-		/// <returns>A Gpx object, null if the file fails to load.</returns>
-		public static Gpx Load(string fileName)
+        /// <summary>
+        /// Asynchronously loads a GPX file from an XML reader.
+        /// </summary>
+        /// <param name="reader">XML reader containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static async Task<Gpx> LoadAsync(XmlReader reader)
 		{
-			if (string.IsNullOrEmpty(fileName) || !System.IO.File.Exists(fileName))
-			{
-				return null;
-			}
-			var gpx = new Gpx();
+            return await Task.Run(() => Load(reader));
+		}
+
+        /// <summary>
+        /// Asynchronously loads a GPX file.
+        /// </summary>
+        /// <param name="fileName">Full path and name of the GPX file.</param>
+        /// <returns>A Gpx object, null if the file fails to load.</returns>
+        public static async Task<Gpx> LoadAsync(string fileName)
+        {
+            return await Task.Run(() => Load(fileName));
+        }
+
+        /// <summary>
+        /// Asynchronously loads a GPX file from a text reader.
+        /// </summary>
+        /// <param name="reader">Text reader containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static async Task<Gpx> LoadAsync(TextReader reader)
+        {
+            return await Task.Run(() => Load(reader));
+        }
+
+        /// <summary>
+        /// Asynchronously loads a GPX file from a stream.
+        /// </summary>
+        /// <param name="stream">Stream containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static async Task<Gpx> LoadAsync(Stream stream)
+        {
+            return await Task.Run(() => Load(stream));
+        }
+
+        /// <summary>
+        /// Loads a GPX file from an XML reader.
+        /// </summary>
+        /// <param name="reader">XML reader containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static Gpx Load(XmlReader reader)
+		{
+            if (reader == null)
+            {
+                return null;
+            }
+
+            var gpx = new Gpx();
 			try
 			{
-				// save the file name
-				gpx.FileName= fileName;
-
 				// load the document
 				XmlDocument doc = new XmlDocument();
-				doc.Load(fileName);
-
+                doc.Load(reader);
+				XmlNode gpxNode = null;
+				foreach (XmlNode node in doc.ChildNodes)
+				{
+					if (node.Name == "gpx")
+					{
+						gpxNode = node;
+						break;
+					}
+				}
+				if (gpxNode == null)
+				{
+					return null;
+				}
+				
 				// get the namespace
-				var gpxElement = XElement.Load(fileName);
-				string xmlns = gpxElement.Attribute("xmlns")?.Value;
+				ns = new XmlNamespaceManager(doc.NameTable);
+				string xmlns = gpxNode.Attributes["xmlns"]?.Value;
 				if (string.IsNullOrEmpty(xmlns))
 				{
-					xmlns = "http://www.topografix.com/GPX/1/1";
+					return null;
 				}
-				ns = new XmlNamespaceManager(doc.NameTable);
 				ns.AddNamespace("ns", xmlns);
 
 				// add the extension namespaces
-				foreach (var attr in gpxElement.Attributes())
+				foreach (XmlAttribute attr in gpxNode.Attributes)
 				{
-					if (attr.IsNamespaceDeclaration && attr.Name.LocalName != "xmlns")
+					if (attr.Name.StartsWith("xmlns") && attr.Name != "xmlns")
 					{
 						GpxNamespace newNs = new GpxNamespace();
-						newNs.Name = attr.Name.LocalName;
+						string[] parts = attr.Name.Split(new char[] { ':' });
+						newNs.Name = parts[1];
 						newNs.Value = attr.Value;
 						gpx.Namespaces.Add(newNs);
 						ns.AddNamespace(newNs.Name, newNs.Value);
 					}
 				}
 
-				// read the top level (gpx) node
-				var gpxNode = ReadGpx(doc, gpx);
-				if (gpxNode == null)
-				{
-					return null;
-				}
+                // read the top level (gpx) node
+                ReadGpx(gpxNode, gpx);
 
-				// read the metadata, routes, waypoints and tracks
-				ReadMetadata(gpxNode, gpx.Metadata);
-				ReadRoutes(gpxNode, gpx.Routes);
-				ReadWaypoints(gpxNode, gpx.Waypoints);
-				ReadTracks(gpxNode, gpx.Tracks);
-			}
-			catch
+                // read the metadata, routes, waypoints and tracks
+                ReadMetadata(gpxNode, gpx.Metadata);
+                ReadRoutes(gpxNode, gpx.Routes);
+                ReadWaypoints(gpxNode, gpx.Waypoints);
+                ReadTracks(gpxNode, gpx.Tracks);
+            }
+            catch
 			{
-				return null;
-			}
+                return null;
+            }
+            return gpx;
+        }
+
+        /// <summary>
+        /// Loads a GPX file.
+        /// </summary>
+        /// <param name="fileName">Full path and name of the GPX file.</param>
+        /// <returns>A Gpx object, null if the file fails to load.</returns>
+        public static Gpx Load(string fileName)
+		{
+			Gpx gpx = null;
+			XmlTextReader reader = null;
+            try
+            {
+                reader = new XmlTextReader(fileName);
+                gpx = Load(reader);
+            }
+            finally
+            {
+                reader?.Close();
+            }
 			return gpx;
 		}
 
-		private static GpxBounds ReadBounds(XmlNode parentNode, string name)
+        /// <summary>
+        /// Loads a GPX file from a text reader.
+        /// </summary>
+        /// <param name="reader">Text reader containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static Gpx Load(TextReader reader)
+        {
+            Gpx gpx = null;
+            XmlTextReader xmlReader = null;
+            try
+            {
+                xmlReader = new XmlTextReader(reader);
+                gpx = Load(xmlReader);
+            }
+            finally
+            {
+                xmlReader?.Close();
+            }
+			return gpx;
+        }
+
+        /// <summary>
+        /// Loads a GPX file from a stream.
+        /// </summary>
+        /// <param name="stream">Stream containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static Gpx Load(Stream stream)
+		{
+            Gpx gpx = null;
+            XmlTextReader reader = null;
+            try
+            {
+                reader = new XmlTextReader(stream);
+                gpx = Load(reader);
+            }
+            finally
+            {
+                reader?.Close();
+            }
+			return gpx;
+        }
+
+        private static GpxBounds ReadBounds(XmlNode parentNode, string name)
 		{
 			var node = parentNode.SelectSingleNode("ns:" + name, ns);
 			if (node != null)
@@ -175,7 +286,7 @@ namespace FrozenNorth.Gpx
 			return extension;
 		}
 
-		private static bool ReadExtensions(XmlNode parentNode, GpxExtensions extensions)
+		private static bool ReadExtensions(XmlNode parentNode, GpxExtensionList extensions)
 		{
 			extensions.Clear();
 			var node = parentNode.SelectSingleNode("ns:extensions", ns);
@@ -212,17 +323,11 @@ namespace FrozenNorth.Gpx
 			return null;
 		}
 
-		private static XmlNode ReadGpx(XmlDocument doc, Gpx gpx)
+		private static void ReadGpx(XmlNode gpxNode, Gpx gpx)
 		{
-			var gpxNode = doc.SelectSingleNode("//ns:gpx", ns);
-			if (gpxNode == null)
-			{
-				return null;
-			}
 			gpx.Version = ReadStringAttr(gpxNode, "version");
 			gpx.Creator = ReadStringAttr(gpxNode, "creator");
 			ReadExtensions(gpxNode, gpx.Extensions);
-			return gpxNode;
 		}
 
 		private static GpxLink ReadLink(XmlNode parentNode)
@@ -239,7 +344,7 @@ namespace FrozenNorth.Gpx
 			return null;
 		}
 
-		private static void ReadLinks(XmlNode parentNode, GpxLinks links)
+		private static void ReadLinks(XmlNode parentNode, GpxLinkList links)
 		{
 			links.Clear();
 			var nodes = parentNode.SelectNodes("ns:link", ns);
@@ -330,7 +435,7 @@ namespace FrozenNorth.Gpx
 			return route;
 		}
 
-		private static void ReadRoutes(XmlNode gpxNode, GpxRoutes routes)
+		private static void ReadRoutes(XmlNode gpxNode, GpxRouteList routes)
 		{
 			routes.Clear();
 			var nodes = gpxNode.SelectNodes("ns:rte", ns);
@@ -395,7 +500,7 @@ namespace FrozenNorth.Gpx
 			return segment;
 		}
 
-		private static void ReadTracks(XmlNode gpxNode, GpxTracks tracks)
+		private static void ReadTracks(XmlNode gpxNode, GpxTrackList tracks)
 		{
 			tracks.Clear();
 			var nodes = gpxNode.SelectNodes("ns:trk", ns);
@@ -436,7 +541,7 @@ namespace FrozenNorth.Gpx
 			return null;
 		}
 
-		private static void ReadWaypoints(XmlNode gpxNode, GpxPoints waypoints)
+		private static void ReadWaypoints(XmlNode gpxNode, GpxPointList waypoints)
 		{
 			waypoints.Clear();
 			var nodes = gpxNode.SelectNodes("ns:wpt", ns);
