@@ -7,24 +7,27 @@ Reads and writes GPX files.
 ```
 FrozenNorth.Gpx.GpxReader
 
-/// <summary>
-/// Loads a GPX file.
-/// </summary>
-/// <param name="fileName">Full path and name of the GPX file.</param>
-/// <returns>A Gpx object, null if the file fails to load.</returns>
 public static Gpx Load(string fileName)
+public static Gpx Load(Stream stream)
+public static Gpx Load(TextReader reader)
+public static Gpx Load(XmlReader reader)
+public static async Task<Gpx> LoadAsync(string fileName)
+public static async Task<Gpx> LoadAsync(Stream stream)
+public static async Task<Gpx> LoadAsync(TextReader reader)
+public static async Task<Gpx> LoadAsync(XmlReader reader)
 ```
 
 ```
 FrozenNorth.Gpx.GpxWriter
 
-/// <summary>
-/// Saves a GPX file.
-/// </summary>
-/// <param name="gpx">Gpx object containing the data to be saved.</param>
-/// <param name="fileName">Full path and name of the GPX file.</param>
-/// <returns>True if the file was successfully saved, false if not.</returns>
 public static bool Save(Gpx gpx, string fileName)
+public static bool Save(Gpx gpx, Stream stream)
+public static bool Save(Gpx gpx, TextWriter writer)
+public static bool Save(Gpx gpx, XmlWriter writer)
+public static async Task<bool> SaveAsync(Gpx gpx, string fileName)
+public static async Task<bool> SaveAsync(Gpx gpx, Stream stream)
+public static async Task<bool> SaveAsync(Gpx gpx, TextWriter writer)
+public static async Task<bool> SaveAsync(Gpx gpx, XmlWriter writer)
 ```
 
 # Classes
