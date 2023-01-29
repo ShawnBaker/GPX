@@ -18,7 +18,7 @@ namespace FrozenNorth.Gpx
 		public string Comment;
 		public string Description;
 		public string Source;
-		public GpxLinks Links = new GpxLinks();
+		public GpxLinkList Links = new GpxLinkList();
 		public string SymbolName;
 		public string Type;
 		public GpxFix? Fix;
@@ -28,7 +28,7 @@ namespace FrozenNorth.Gpx
 		public double? Pdop;
 		public double? AgeOfDgpsData;
 		public uint? DgpsId;
-		public GpxExtensions Extensions = new GpxExtensions();
+		public GpxExtensionList Extensions = new GpxExtensionList();
 
 		/// <summary>
 		/// Creates an empty point.

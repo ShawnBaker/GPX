@@ -12,11 +12,11 @@ namespace FrozenNorth.Gpx
 		public string Version = "";
 		public string Creator = "";
 		public GpxMetadata Metadata = new GpxMetadata();
-		public GpxRoutes Routes = new GpxRoutes();
-		public GpxPoints Waypoints = new GpxPoints();
-		public GpxTracks Tracks = new GpxTracks();
-		public GpxNamespaces Namespaces = new GpxNamespaces();
-		public GpxExtensions Extensions = new GpxExtensions();
+		public GpxRouteList Routes = new GpxRouteList();
+		public GpxPointList Waypoints = new GpxPointList();
+		public GpxTrackList Tracks = new GpxTrackList();
+		public GpxNamespaceList Namespaces = new GpxNamespaceList();
+		public GpxExtensionList Extensions = new GpxExtensionList();
 	}
 
 	/// <summary>
@@ -94,7 +94,7 @@ namespace FrozenNorth.Gpx
 		public string Name;
 		public string Value;
 		public GpxNamespace Namespace;
-		public GpxExtensions Children = new GpxExtensions();
+		public GpxExtensionList Children = new GpxExtensionList();
 
 		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Value) || Children.Count > 0;
 	}
@@ -102,7 +102,7 @@ namespace FrozenNorth.Gpx
 	/// <summary>
 	/// A list of extensions read from a GPX file.
 	/// </summary>
-	public class GpxExtensions : List<GpxExtension> { }
+	public class GpxExtensionList : List<GpxExtension> { }
 
 	/// <summary>
 	/// A fix read from a GPX file.
@@ -147,7 +147,7 @@ namespace FrozenNorth.Gpx
 	/// <summary>
 	/// A list of links read from a GPX file.
 	/// </summary>
-	public class GpxLinks : List<GpxLink> { }
+	public class GpxLinkList : List<GpxLink> { }
 
 	/// <summary>
 	/// The metatdata read from a GPX file.
@@ -158,11 +158,11 @@ namespace FrozenNorth.Gpx
 		public string Description;
 		public GpxPerson Author;
 		public GpxCopyright Copyright;
-		public GpxLinks Links = new GpxLinks();
+		public GpxLinkList Links = new GpxLinkList();
 		public DateTime? Time;
 		public string Keywords;
 		public GpxBounds Bounds;
-		public GpxExtensions Extensions = new GpxExtensions();
+		public GpxExtensionList Extensions = new GpxExtensionList();
 
 		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Description) || Author != null ||
 								Copyright != null || Links.Count > 0 || Time != null || !string.IsNullOrEmpty(Keywords) ||
@@ -181,7 +181,7 @@ namespace FrozenNorth.Gpx
 	/// <summary>
 	/// A list of namespaces read from a GPX file.
 	/// </summary>
-	public class GpxNamespaces : List<GpxNamespace> { }
+	public class GpxNamespaceList : List<GpxNamespace> { }
 
 	/// <summary>
 	/// A person read from a GPX file.
@@ -204,37 +204,45 @@ namespace FrozenNorth.Gpx
 		public string Comment = null;
 		public string Description = null;
 		public string Source = null;
-		public GpxLinks Links = new GpxLinks();
+		public GpxLinkList Links = new GpxLinkList();
 		public uint? Number;
 		public string Type = null;
-		public GpxPoints Points = new GpxPoints();
-		public GpxExtensions Extensions = new GpxExtensions();
+		public GpxPointList Points = new GpxPointList();
+		public GpxExtensionList Extensions = new GpxExtensionList();
 
 		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Comment) || !string.IsNullOrEmpty(Description) ||
 								!string.IsNullOrEmpty(Source) || Links.Count > 0 || Number != null || !string.IsNullOrEmpty(Type) ||
 								Points.Count > 0;
 
-		public override string ToString()
-		{
-			if (!string.IsNullOrEmpty(Name)) return Name;
-			if (!string.IsNullOrEmpty(Description)) return Description;
-			if (!string.IsNullOrEmpty(Comment)) return Comment;
-			if (Points.Count > 0)
+        public string DisplayName
+        {
+			get
 			{
-				var point = Points[0];
-				if (!string.IsNullOrEmpty(point.Name)) return point.Name;
-				if (!string.IsNullOrEmpty(point.Description)) return point.Description;
-				if (!string.IsNullOrEmpty(point.Comment)) return point.Comment;
-				return string.Format("{0},{1}", point.Latitude, point.Longitude);
+				if (!string.IsNullOrEmpty(Name)) return Name;
+				if (!string.IsNullOrEmpty(Description)) return Description;
+				if (!string.IsNullOrEmpty(Comment)) return Comment;
+				if (Points.Count > 0)
+				{
+					var point = Points[0];
+					if (!string.IsNullOrEmpty(point.Name)) return point.Name;
+					if (!string.IsNullOrEmpty(point.Description)) return point.Description;
+					if (!string.IsNullOrEmpty(point.Comment)) return point.Comment;
+					return string.Format("{0},{1}", point.Latitude, point.Longitude);
+				}
+				return "Route";
 			}
-			return "Route";
 		}
-	}
+
+        public override string ToString()
+        {
+            return DisplayName;
+        }
+    }
 
 	/// <summary>
 	/// A list of routes read from a GPX file.
 	/// </summary>
-	public class GpxRoutes : List<GpxRoute> { }
+	public class GpxRouteList : List<GpxRoute> { }
 
 	/// <summary>
 	/// A track read from a GPX file.
@@ -246,37 +254,45 @@ namespace FrozenNorth.Gpx
 		public string Comment;
 		public string Description;
 		public string Source;
-		public GpxLinks Links = new GpxLinks();
+		public GpxLinkList Links = new GpxLinkList();
 		public uint? Number;
 		public string Type;
-		public GpxTrackSegments Segments = new GpxTrackSegments();
-		public GpxExtensions Extensions = new GpxExtensions();
+		public GpxTrackSegmentList Segments = new GpxTrackSegmentList();
+		public GpxExtensionList Extensions = new GpxExtensionList();
 
 		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Comment) || !string.IsNullOrEmpty(Description) ||
 								!string.IsNullOrEmpty(Source) || Links.Count > 0 || Number != null || !string.IsNullOrEmpty(Type) ||
 								Segments.Count > 0;
 
-		public override string ToString()
+		public string DisplayName
 		{
-			if (!string.IsNullOrEmpty(Name)) return Name;
-			if (!string.IsNullOrEmpty(Description)) return Description;
-			if (!string.IsNullOrEmpty(Comment)) return Comment;
-			if (Segments.Count > 0 && Segments[0].Points.Count > 0)
+			get
 			{
-				var point = Segments[0].Points[0];
-				if (!string.IsNullOrEmpty(point.Name)) return point.Name;
-				if (!string.IsNullOrEmpty(point.Description)) return point.Description;
-				if (!string.IsNullOrEmpty(point.Comment)) return point.Comment;
-				return string.Format("{0},{1}", point.Latitude, point.Longitude);
+				if (!string.IsNullOrEmpty(Name)) return Name;
+				if (!string.IsNullOrEmpty(Description)) return Description;
+				if (!string.IsNullOrEmpty(Comment)) return Comment;
+				if (Segments.Count > 0 && Segments[0].Points.Count > 0)
+				{
+					var point = Segments[0].Points[0];
+					if (!string.IsNullOrEmpty(point.Name)) return point.Name;
+					if (!string.IsNullOrEmpty(point.Description)) return point.Description;
+					if (!string.IsNullOrEmpty(point.Comment)) return point.Comment;
+					return string.Format("{0},{1}", point.Latitude, point.Longitude);
+				}
+				return "Track";
 			}
-			return "Track";
 		}
-	}
 
-	/// <summary>
-	/// A list of tracks read from a GPX file.
-	/// </summary>
-	public class GpxTracks : List<GpxTrack> { }
+        public override string ToString()
+        {
+            return DisplayName;
+        }
+    }
+
+    /// <summary>
+    /// A list of tracks read from a GPX file.
+    /// </summary>
+    public class GpxTrackList : List<GpxTrack> { }
 
 	/// <summary>
 	/// A track segment read from a GPX file.
@@ -284,8 +300,8 @@ namespace FrozenNorth.Gpx
 	public class GpxTrackSegment
 	{
 		public GpxTrack Track = null;
-		public GpxPoints Points = new GpxPoints();
-		public GpxExtensions Extensions = new GpxExtensions();
+		public GpxPointList Points = new GpxPointList();
+		public GpxExtensionList Extensions = new GpxExtensionList();
 
 		public override string ToString()
 		{
@@ -296,5 +312,5 @@ namespace FrozenNorth.Gpx
 	/// <summary>
 	/// A list of track segments read from a GPX file.
 	/// </summary>
-	public class GpxTrackSegments : List<GpxTrackSegment> { }
+	public class GpxTrackSegmentList : List<GpxTrackSegment> { }
 }

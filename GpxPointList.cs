@@ -6,7 +6,7 @@ namespace FrozenNorth.Gpx
 	/// <summary>
 	/// A list of points read from a GPX file.
 	/// </summary>
-	public class GpxPoints : List<GpxPoint>
+	public class GpxPointList : List<GpxPoint>
 	{
 		/// <summary>
 		/// Gets the time from the first point.
@@ -125,7 +125,7 @@ namespace FrozenNorth.Gpx
 		/// Gets enough points to draw an elevation graph.
 		/// </summary>
 		/// <returns>List of points.</returns>
-		public GpxPoints GetReducedElevationPoints()
+		public GpxPointList GetReducedElevationPoints()
 		{
 			return DouglasPeucker.Reduce(this, 0.5, ElevationDistance);
 		}
@@ -149,7 +149,7 @@ namespace FrozenNorth.Gpx
 				{
 					if (index > 0)
 					{
-						distance += GpxPoints.DistanceBetweenPoints(this[index], this[index - 1]);
+						distance += GpxPointList.DistanceBetweenPoints(this[index], this[index - 1]);
 					}
 					index++;
 				}
@@ -166,7 +166,7 @@ namespace FrozenNorth.Gpx
 					point = this[index - 1].Clone();
 					double portion = (offsetTime - point.NonNullTime).TotalSeconds / (this[index].NonNullTime - point.NonNullTime).TotalSeconds;
 					point.Elevation += (this[index].Elevation - point.Elevation) * portion;
-					distance += GpxPoints.DistanceBetweenPoints(this[index], this[index - 1]) * portion;
+					distance += GpxPointList.DistanceBetweenPoints(this[index], this[index - 1]) * portion;
 				}
 				point.Time = StartTime + offset;
 				return true;

@@ -24,7 +24,7 @@ namespace FrozenNorth.Gpx
 		/// <param name="tolerance">Tolerance to use in the algorithm.</param>
 		/// <param name="distanceDelegate">Distance caluclation delegate.</param>
 		/// <returns>Reduced list of GPX points.</returns>
-		public static GpxPoints Reduce(GpxPoints points, double tolerance, DistanceDelegate distanceDelegate)
+		public static GpxPointList Reduce(GpxPointList points, double tolerance, DistanceDelegate distanceDelegate)
 		{
 
 			if (points == null || points.Count < 3)
@@ -42,7 +42,7 @@ namespace FrozenNorth.Gpx
 
 			Reduce(points, firstPoint, lastPoint, tolerance, ref pointIndexsToKeep, distanceDelegate);
 
-			GpxPoints returnPoints = new GpxPoints();
+			GpxPointList returnPoints = new GpxPointList();
 			pointIndexsToKeep.Sort();
 			foreach (Int32 index in pointIndexsToKeep)
 			{
@@ -60,7 +60,7 @@ namespace FrozenNorth.Gpx
 		/// <param name="tolerance">Tolerance to use in the algorithm.</param>
 		/// <param name="pointIndexsToKeep">Indicies of the points to keep.</param>
 		/// <param name="distanceDelegate">Distance caluclation delegate.</param>
-		private static void Reduce(GpxPoints points, Int32 firstPoint, Int32 lastPoint, Double tolerance,
+		private static void Reduce(GpxPointList points, Int32 firstPoint, Int32 lastPoint, Double tolerance,
 									ref List<Int32> pointIndexsToKeep, DistanceDelegate distanceDelegate)
 		{
 			Double maxDistance = 0;
