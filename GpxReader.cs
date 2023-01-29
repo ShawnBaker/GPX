@@ -13,16 +13,6 @@ namespace FrozenNorth.Gpx
 		private static XmlNamespaceManager ns;
 
         /// <summary>
-        /// Asynchronously loads a GPX file from an XML reader.
-        /// </summary>
-        /// <param name="reader">XML reader containing the GPX file.</param>
-        /// <returns>A Gpx object, null if the stream fails to load.</returns>
-        public static async Task<Gpx> LoadAsync(XmlReader reader)
-		{
-            return await Task.Run(() => Load(reader));
-		}
-
-        /// <summary>
         /// Asynchronously loads a GPX file.
         /// </summary>
         /// <param name="fileName">Full path and name of the GPX file.</param>
@@ -30,6 +20,16 @@ namespace FrozenNorth.Gpx
         public static async Task<Gpx> LoadAsync(string fileName)
         {
             return await Task.Run(() => Load(fileName));
+        }
+
+        /// <summary>
+        /// Asynchronously loads a GPX file from a stream.
+        /// </summary>
+        /// <param name="stream">Stream containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static async Task<Gpx> LoadAsync(Stream stream)
+        {
+            return await Task.Run(() => Load(stream));
         }
 
         /// <summary>
@@ -43,13 +43,76 @@ namespace FrozenNorth.Gpx
         }
 
         /// <summary>
-        /// Asynchronously loads a GPX file from a stream.
+        /// Asynchronously loads a GPX file from an XML reader.
+        /// </summary>
+        /// <param name="reader">XML reader containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static async Task<Gpx> LoadAsync(XmlReader reader)
+        {
+            return await Task.Run(() => Load(reader));
+        }
+
+        /// <summary>
+        /// Loads a GPX file.
+        /// </summary>
+        /// <param name="fileName">Full path and name of the GPX file.</param>
+        /// <returns>A Gpx object, null if the file fails to load.</returns>
+        public static Gpx Load(string fileName)
+        {
+            Gpx gpx = null;
+            XmlTextReader reader = null;
+            try
+            {
+                reader = new XmlTextReader(fileName);
+                gpx = Load(reader);
+            }
+            finally
+            {
+                reader?.Close();
+            }
+            return gpx;
+        }
+
+        /// <summary>
+        /// Loads a GPX file from a stream.
         /// </summary>
         /// <param name="stream">Stream containing the GPX file.</param>
         /// <returns>A Gpx object, null if the stream fails to load.</returns>
-        public static async Task<Gpx> LoadAsync(Stream stream)
+        public static Gpx Load(Stream stream)
         {
-            return await Task.Run(() => Load(stream));
+            Gpx gpx = null;
+            XmlTextReader reader = null;
+            try
+            {
+                reader = new XmlTextReader(stream);
+                gpx = Load(reader);
+            }
+            finally
+            {
+                reader?.Close();
+            }
+            return gpx;
+        }
+
+        /// <summary>
+        /// Loads a GPX file from a text reader.
+        /// </summary>
+        /// <param name="reader">Text reader containing the GPX file.</param>
+        /// <returns>A Gpx object, null if the stream fails to load.</returns>
+        public static Gpx Load(TextReader reader)
+        {
+            Gpx gpx = null;
+            XmlTextReader xmlReader = null;
+            try
+            {
+                xmlReader = new XmlTextReader(reader);
+                gpx = Load(xmlReader);
+            }
+            finally
+            {
+                xmlReader?.Close();
+            }
+            return gpx;
         }
 
         /// <summary>
@@ -121,69 +184,6 @@ namespace FrozenNorth.Gpx
                 return null;
             }
             return gpx;
-        }
-
-        /// <summary>
-        /// Loads a GPX file.
-        /// </summary>
-        /// <param name="fileName">Full path and name of the GPX file.</param>
-        /// <returns>A Gpx object, null if the file fails to load.</returns>
-        public static Gpx Load(string fileName)
-		{
-			Gpx gpx = null;
-			XmlTextReader reader = null;
-            try
-            {
-                reader = new XmlTextReader(fileName);
-                gpx = Load(reader);
-            }
-            finally
-            {
-                reader?.Close();
-            }
-			return gpx;
-		}
-
-        /// <summary>
-        /// Loads a GPX file from a text reader.
-        /// </summary>
-        /// <param name="reader">Text reader containing the GPX file.</param>
-        /// <returns>A Gpx object, null if the stream fails to load.</returns>
-        public static Gpx Load(TextReader reader)
-        {
-            Gpx gpx = null;
-            XmlTextReader xmlReader = null;
-            try
-            {
-                xmlReader = new XmlTextReader(reader);
-                gpx = Load(xmlReader);
-            }
-            finally
-            {
-                xmlReader?.Close();
-            }
-			return gpx;
-        }
-
-        /// <summary>
-        /// Loads a GPX file from a stream.
-        /// </summary>
-        /// <param name="stream">Stream containing the GPX file.</param>
-        /// <returns>A Gpx object, null if the stream fails to load.</returns>
-        public static Gpx Load(Stream stream)
-		{
-            Gpx gpx = null;
-            XmlTextReader reader = null;
-            try
-            {
-                reader = new XmlTextReader(stream);
-                gpx = Load(reader);
-            }
-            finally
-            {
-                reader?.Close();
-            }
-			return gpx;
         }
 
         private static GpxBounds ReadBounds(XmlNode parentNode, string name)
