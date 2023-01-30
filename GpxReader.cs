@@ -65,6 +65,10 @@ namespace FrozenNorth.Gpx
             {
                 reader = new XmlTextReader(fileName);
                 gpx = Load(reader);
+				if (gpx != null)
+				{
+					gpx.FileName = fileName;
+				}
             }
             finally
             {
