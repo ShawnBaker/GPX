@@ -72,7 +72,7 @@ namespace FrozenNorth.Gpx
         /// <returns>True if the file was successfully saved, false if not.</returns>
         public static bool Save(Gpx gpx, string fileName)
         {
-            return Save(gpx, XmlWriter.Create(fileName));
+            return SaveInternal(gpx, XmlWriter.Create(fileName, GetSettings()));
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace FrozenNorth.Gpx
         /// <returns>True if the file was successfully saved, false if not.</returns>
         public static bool Save(Gpx gpx, Stream stream)
         {
-            return Save(gpx, XmlWriter.Create(stream));
+            return SaveInternal(gpx, XmlWriter.Create(stream, GetSettings()));
         }
 
         /// <summary>
@@ -94,7 +94,18 @@ namespace FrozenNorth.Gpx
         /// <returns>True if the file was successfully saved, false if not.</returns>
         public static bool Save(Gpx gpx, TextWriter writer)
         {
-            return Save(gpx, XmlWriter.Create(writer));
+            return SaveInternal(gpx, XmlWriter.Create(writer, GetSettings()));
+        }
+
+		/// <summary>
+		/// Saves a GPX file to a XmlWriter.
+		/// </summary>
+		/// <param name="gpx">Gpx object containing the data to be saved.</param>
+		/// <param name="writer">XmlWriter to write the XML to.</param>
+		/// <returns>True if the file was successfully saved, false if not.</returns>
+		public static bool Save(Gpx gpx, XmlWriter writer)
+		{
+            return SaveInternal(gpx, XmlWriter.Create(writer, GetSettings()));
         }
 
         /// <summary>
@@ -103,7 +114,7 @@ namespace FrozenNorth.Gpx
         /// <param name="gpx">Gpx object containing the data to be saved.</param>
         /// <param name="writer">XmlWriter to write the XML to.</param>
         /// <returns>True if the file was successfully saved, false if not.</returns>
-        public static bool Save(Gpx gpx, XmlWriter writer)
+        public static bool SaveInternal(Gpx gpx, XmlWriter writer)
         {
             if (gpx == null || writer == null)
             {
@@ -112,8 +123,7 @@ namespace FrozenNorth.Gpx
             try
             {
                 GpxWriter.gpx = gpx;
-                xmlWriter.Settings.Indent = true;
-                xmlWriter.Settings.IndentChars = "\t";
+				xmlWriter = writer;
                 xmlWriter.WriteStartDocument();
                 xmlWriter.WriteStartElement("gpx", "http://www.topografix.com/GPX/1/1");
                 gpx.Version = "1.1";
@@ -149,7 +159,17 @@ namespace FrozenNorth.Gpx
             return true;
         }
 
-		private static void WriteBounds(string name, GpxBounds bounds)
+		private static XmlWriterSettings GetSettings()
+		{
+            XmlWriterSettings settings = new XmlWriterSettings()
+            {
+                Indent = true,
+                IndentChars = "\t"
+            };
+			return settings;
+        }
+
+        private static void WriteBounds(string name, GpxBounds bounds)
 		{
 			if (bounds != null)
 			{
