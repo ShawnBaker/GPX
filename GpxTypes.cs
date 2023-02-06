@@ -8,15 +8,15 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class Gpx
 	{
-		public string FileName = "";
-		public string Version = "";
-		public string Creator = "";
-		public GpxMetadata Metadata = new GpxMetadata();
-		public GpxRouteList Routes = new GpxRouteList();
-		public GpxPointList Waypoints = new GpxPointList();
-		public GpxTrackList Tracks = new GpxTrackList();
-		public GpxNamespaceList Namespaces = new GpxNamespaceList();
-		public GpxExtensionList Extensions = new GpxExtensionList();
+		public string FileName { get; set; } = "";
+		public string Version { get; set; } = "";
+		public string Creator { get; set; } = "";
+		public GpxMetadata Metadata { get; } = new GpxMetadata();
+		public GpxRouteList Routes { get; } = new GpxRouteList();
+		public GpxPointList Waypoints { get; } = new GpxPointList();
+		public GpxTrackList Tracks { get; } = new GpxTrackList();
+		public GpxNamespaceList Namespaces { get; } = new GpxNamespaceList();
+		public GpxExtensionList Extensions { get; } = new GpxExtensionList();
 	}
 
 	/// <summary>
@@ -24,10 +24,10 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxBounds
 	{
-		public double MinLatitude;
-		public double MaxLatitude;
-		public double MinLongitude;
-		public double MaxLongitude;
+		public double MinLatitude { get; set; }
+		public double MaxLatitude { get; set; }
+		public double MinLongitude { get; set; }
+		public double MaxLongitude { get; set; }
 
 		public override string ToString()
 		{
@@ -40,9 +40,9 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxCopyright
 	{
-		public string Author;
-		public string Year;
-		public Uri Licence;
+		public string Author { get; set; }
+		public string Year { get; set; }
+		public Uri Licence { get; set; }
 
 		public bool HasData => !string.IsNullOrEmpty(Author) || !string.IsNullOrEmpty(Year) || Licence != null;
 
@@ -68,8 +68,8 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxEmail
 	{
-		public string Id;
-		public string Domain;
+		public string Id { get; set; }
+		public string Domain { get; set; }
 
 		public bool HasData => !string.IsNullOrEmpty(Id) || !string.IsNullOrEmpty(Domain);
 
@@ -90,11 +90,11 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxExtension
 	{
-		public string Prefix;
-		public string Name;
-		public string Value;
-		public GpxNamespace Namespace;
-		public GpxExtensionList Children = new GpxExtensionList();
+		public string Prefix { get; set; }
+		public string Name { get; set; }
+		public string Value { get; set; }
+		public GpxNamespace Namespace { get; set; }
+		public GpxExtensionList Children { get; } = new GpxExtensionList();
 
 		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Value) || Children.Count > 0;
 	}
@@ -121,9 +121,9 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxLink
 	{
-		public Uri Href;
-		public string Text;
-		public string Type;
+		public Uri Href { get; set; }
+		public string Text { get; set; }
+		public string Type { get; set; }
 
 		public bool HasData => Href != null || !string.IsNullOrEmpty(Text) || !string.IsNullOrEmpty(Type);
 
@@ -154,15 +154,15 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxMetadata
 	{
-		public string Name;
-		public string Description;
-		public GpxPerson Author;
-		public GpxCopyright Copyright;
-		public GpxLinkList Links = new GpxLinkList();
-		public DateTime? Time;
-		public string Keywords;
-		public GpxBounds Bounds;
-		public GpxExtensionList Extensions = new GpxExtensionList();
+		public string Name { get; set; }
+		public string Description { get; set; }
+		public GpxPerson Author { get; set; }
+		public GpxCopyright Copyright { get; set; }
+		public GpxLinkList Links { get; } = new GpxLinkList();
+		public DateTime? Time { get; set; }
+		public string Keywords { get; set; }
+		public GpxBounds Bounds { get; set; }
+		public GpxExtensionList Extensions { get; } = new GpxExtensionList();
 
 		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Description) || Author != null ||
 								Copyright != null || Links.Count > 0 || Time != null || !string.IsNullOrEmpty(Keywords) ||
@@ -174,8 +174,8 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxNamespace
 	{
-		public string Name;
-		public string Value;
+		public string Name { get; set; }
+		public string Value { get; set; }
 	}
 
 	/// <summary>
@@ -188,129 +188,10 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxPerson
 	{
-		public string Name;
-		public GpxEmail Email;
-		public GpxLink Link;
+		public string Name { get; set; }
+		public GpxEmail Email { get; set; }
+		public GpxLink Link { get; set; }
 
 		public bool HasData => Name != null || Email.HasData || Link.HasData;
 	}
-
-	/// <summary>
-	/// A route read from a GPX file.
-	/// </summary>
-	public class GpxRoute
-	{
-		public string Name = null;
-		public string Comment = null;
-		public string Description = null;
-		public string Source = null;
-		public GpxLinkList Links = new GpxLinkList();
-		public uint? Number;
-		public string Type = null;
-		public GpxPointList Points = new GpxPointList();
-		public GpxExtensionList Extensions = new GpxExtensionList();
-
-		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Comment) || !string.IsNullOrEmpty(Description) ||
-								!string.IsNullOrEmpty(Source) || Links.Count > 0 || Number != null || !string.IsNullOrEmpty(Type) ||
-								Points.Count > 0;
-
-        public string DisplayName
-        {
-			get
-			{
-				if (!string.IsNullOrEmpty(Name)) return Name;
-				if (!string.IsNullOrEmpty(Description)) return Description;
-				if (!string.IsNullOrEmpty(Comment)) return Comment;
-				if (Points.Count > 0)
-				{
-					var point = Points[0];
-					if (!string.IsNullOrEmpty(point.Name)) return point.Name;
-					if (!string.IsNullOrEmpty(point.Description)) return point.Description;
-					if (!string.IsNullOrEmpty(point.Comment)) return point.Comment;
-					return string.Format("{0},{1}", point.Latitude, point.Longitude);
-				}
-				return "Route";
-			}
-		}
-
-        public override string ToString()
-        {
-            return DisplayName;
-        }
-    }
-
-	/// <summary>
-	/// A list of routes read from a GPX file.
-	/// </summary>
-	public class GpxRouteList : List<GpxRoute> { }
-
-	/// <summary>
-	/// A track read from a GPX file.
-	/// </summary>
-	public class GpxTrack
-	{
-		// public variables
-		public string Name;
-		public string Comment;
-		public string Description;
-		public string Source;
-		public GpxLinkList Links = new GpxLinkList();
-		public uint? Number;
-		public string Type;
-		public GpxTrackSegmentList Segments = new GpxTrackSegmentList();
-		public GpxExtensionList Extensions = new GpxExtensionList();
-
-		public bool HasData => !string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Comment) || !string.IsNullOrEmpty(Description) ||
-								!string.IsNullOrEmpty(Source) || Links.Count > 0 || Number != null || !string.IsNullOrEmpty(Type) ||
-								Segments.Count > 0;
-
-		public string DisplayName
-		{
-			get
-			{
-				if (!string.IsNullOrEmpty(Name)) return Name;
-				if (!string.IsNullOrEmpty(Description)) return Description;
-				if (!string.IsNullOrEmpty(Comment)) return Comment;
-				if (Segments.Count > 0 && Segments[0].Points.Count > 0)
-				{
-					var point = Segments[0].Points[0];
-					if (!string.IsNullOrEmpty(point.Name)) return point.Name;
-					if (!string.IsNullOrEmpty(point.Description)) return point.Description;
-					if (!string.IsNullOrEmpty(point.Comment)) return point.Comment;
-					return string.Format("{0},{1}", point.Latitude, point.Longitude);
-				}
-				return "Track";
-			}
-		}
-
-        public override string ToString()
-        {
-            return DisplayName;
-        }
-    }
-
-    /// <summary>
-    /// A list of tracks read from a GPX file.
-    /// </summary>
-    public class GpxTrackList : List<GpxTrack> { }
-
-	/// <summary>
-	/// A track segment read from a GPX file.
-	/// </summary>
-	public class GpxTrackSegment
-	{
-		public GpxTrack Track = null;
-		public GpxPointList Points = new GpxPointList();
-		public GpxExtensionList Extensions = new GpxExtensionList();
-
-		public override string ToString()
-		{
-			return string.Format("Segment {0} - {1} Points", Track.Segments.IndexOf(this) + 1, Points.Count.ToString());
-		}
-	}
-
-	/// <summary>
-	/// A list of track segments read from a GPX file.
-	/// </summary>
-	public class GpxTrackSegmentList : List<GpxTrackSegment> { }
 }

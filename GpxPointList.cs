@@ -9,16 +9,39 @@ namespace FrozenNorth.Gpx
 	public class GpxPointList : List<GpxPoint>
 	{
 		/// <summary>
-		/// Gets the time from the first point.
+		/// Gets the time from the first point that has a time.
 		/// </summary>
-		/// <returns>The time from the first point.</returns>
+		/// <returns>The time from the first point that has a time.</returns>
 		public DateTime StartTime
 		{
 			get
 			{
-				if (Count > 0)
+				foreach (var point in this)
 				{
-					return this[0].NonNullTime;
+					if (point.Time.HasValue)
+					{
+						return point.Time.Value;
+					}
+				}
+				return DateTime.MinValue;
+			}
+		}
+
+		/// <summary>
+		/// Gets the time from the last point that has a time.
+		/// </summary>
+		/// <returns>The time from the last point that has a time.</returns>
+		public DateTime EndTime
+		{
+			get
+			{
+				for (int i = Count - 1; i >= 0; i--)
+				{
+					var point = this[i];
+					if (point.Time.HasValue)
+					{
+						return point.Time.Value;
+					}
 				}
 				return DateTime.MinValue;
 			}
@@ -28,17 +51,7 @@ namespace FrozenNorth.Gpx
 		/// Gets the time between the first and last points.
 		/// </summary>
 		/// <returns>The time between the first and last points.</returns>
-		public TimeSpan TimeRange
-		{
-			get
-			{
-				if (Count > 1)
-				{
-					return this[Count - 1].NonNullTime - this[0].NonNullTime;
-				}
-				return TimeSpan.Zero;
-			}
-		}
+		public TimeSpan Duration => EndTime - StartTime;
 
 		/// <summary>
 		/// Gets the total distance between all points.
@@ -65,29 +78,32 @@ namespace FrozenNorth.Gpx
 		/// <returns>The total range in elevation.</returns>
 		public double GetElevationRange(out double low, out double high)
 		{
+			low = 0;
+			high = 0;
 			if (Count > 0)
 			{
-				low = double.MaxValue;
-				high = double.MinValue;
+				double? lowest = null;
+				double? highest = null;
 				foreach (GpxPoint point in this)
 				{
 					if (point.Elevation.HasValue)
 					{
-						if (point.Elevation < low)
+						double elevation = point.Elevation.Value;
+						if (!lowest.HasValue || elevation < lowest)
 						{
-							low = (double)point.Elevation;
+							lowest = elevation;
 						}
-						if (point.Elevation > high)
+						if (!highest.HasValue || elevation > highest)
 						{
-							high = (double)point.Elevation;
+							highest = elevation;
 						}
 					}
 				}
-			}
-			else
-			{
-				low = 0;
-				high = 0;
+				if (lowest.HasValue)
+				{
+					low = lowest.Value;
+					high = highest.Value;
+				}
 			}
 			return high - low;
 		}
@@ -124,10 +140,11 @@ namespace FrozenNorth.Gpx
 		/// <summary>
 		/// Gets enough points to draw an elevation graph.
 		/// </summary>
+		/// <param name="tolerance">Tolerance (between 0 and 1) to use with the Douglas Peucker algorithm.</param>
 		/// <returns>List of points.</returns>
-		public GpxPointList GetReducedElevationPoints()
+		public GpxPointList GetReducedElevationPoints(double tolerance = 0.5)
 		{
-			return DouglasPeucker.Reduce(this, 0.5, ElevationDistance);
+			return DouglasPeucker.Reduce(this, tolerance, ElevationDistance);
 		}
 
 		/// <summary>
@@ -143,9 +160,11 @@ namespace FrozenNorth.Gpx
 			distance = 0;
 			if (Count > 0)
 			{
+				if (offset < TimeSpan.Zero) offset = TimeSpan.Zero;
+				else if (offset > Duration) offset = Duration;
 				DateTime offsetTime = StartTime + offset;
 				int index = 0;
-				while (index < Count && this[index].NonNullTime < offsetTime)
+				while (index < Count && this[index].TimeValue < offsetTime)
 				{
 					if (index > 0)
 					{
@@ -157,14 +176,14 @@ namespace FrozenNorth.Gpx
 				{
 					point = this[Count - 1].Clone();
 				}
-				else if (index == 0 || this[index].NonNullTime == offsetTime)
+				else if (index == 0 || this[index].TimeValue == offsetTime)
 				{
 					point = this[index].Clone();
 				}
 				else
 				{
 					point = this[index - 1].Clone();
-					double portion = (offsetTime - point.NonNullTime).TotalSeconds / (this[index].NonNullTime - point.NonNullTime).TotalSeconds;
+					double portion = (offsetTime - point.TimeValue).TotalSeconds / (this[index].TimeValue - point.TimeValue).TotalSeconds;
 					point.Elevation += (this[index].Elevation - point.Elevation) * portion;
 					distance += GpxPointList.DistanceBetweenPoints(this[index], this[index - 1]) * portion;
 				}
@@ -184,12 +203,12 @@ namespace FrozenNorth.Gpx
 			{
 				return 0;
 			}
-			double time1 = (point1.NonNullTime - StartTime).TotalSeconds;
-			double time2 = (point2.NonNullTime - StartTime).TotalSeconds;
-			double time = (point.NonNullTime - StartTime).TotalSeconds;
-			double area = Math.Abs(.5 * (point1.NonNullElevation * time2 + point2.NonNullElevation * time + point.NonNullElevation * time1 -
-									point2.NonNullElevation * time1 - point.NonNullElevation * time2 - point1.NonNullElevation * time));
-			double bottom = Math.Sqrt(Math.Pow(point1.NonNullElevation - point2.NonNullElevation, 2) + Math.Pow(time1 - time2, 2));
+			double time1 = (point1.TimeValue - StartTime).TotalSeconds;
+			double time2 = (point2.TimeValue - StartTime).TotalSeconds;
+			double time = (point.TimeValue - StartTime).TotalSeconds;
+			double area = Math.Abs(.5 * (point1.ElevationValue * time2 + point2.ElevationValue * time + point.ElevationValue * time1 -
+									point2.ElevationValue * time1 - point.ElevationValue * time2 - point1.ElevationValue * time));
+			double bottom = Math.Sqrt(Math.Pow(point1.ElevationValue - point2.ElevationValue, 2) + Math.Pow(time1 - time2, 2));
 			double height = area / bottom * 2;
 			return height;
 		}

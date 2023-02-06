@@ -7,28 +7,28 @@ namespace FrozenNorth.Gpx
 	/// </summary>
 	public class GpxPoint
 	{
-		// public variables
-		public double Latitude;
-		public double Longitude;
-		public double? Elevation;
-		public DateTime? Time;
-		public double? MagneticVariation;
-		public double? GeoidHeight;
-		public string Name;
-		public string Comment;
-		public string Description;
-		public string Source;
-		public GpxLinkList Links = new GpxLinkList();
-		public string SymbolName;
-		public string Type;
-		public GpxFix? Fix;
-		public uint? NumSatellites;
-		public double? Hdop;
-		public double? Vdop;
-		public double? Pdop;
-		public double? AgeOfDgpsData;
-		public uint? DgpsId;
-		public GpxExtensionList Extensions = new GpxExtensionList();
+		// public properties
+		public double Latitude { get; set; }
+		public double Longitude { get; set; }
+		public double? Elevation { get; set; }
+		public DateTime? Time { get; set; }
+		public double? MagneticVariation { get; set; }
+		public double? GeoidHeight { get; set; }
+		public string Name { get; set; }
+		public string Comment { get; set; }
+		public string Description { get; set; }
+		public string Source { get; set; }
+		public GpxLinkList Links { get; } = new GpxLinkList();
+		public string SymbolName { get; set; }
+		public string Type { get; set; }
+		public GpxFix? Fix { get; set; }
+		public uint? NumSatellites { get; set; }
+		public double? Hdop { get; set; }
+		public double? Vdop { get; set; }
+		public double? Pdop { get; set; }
+		public double? AgeOfDgpsData { get; set; }
+		public uint? DgpsId { get; set; }
+		public GpxExtensionList Extensions { get; } = new GpxExtensionList();
 
 		/// <summary>
 		/// Creates an empty point.
@@ -78,12 +78,23 @@ namespace FrozenNorth.Gpx
 			return point;
 		}
 
+		/// <summary>
+		/// Gets a string representing the point.
+		/// </summary>
+		/// <returns>A string representing the point.</returns>
 		public override string ToString()
 		{
 			return Latitude.ToString() + ", " + Longitude.ToString();
 		}
 
-		internal DateTime NonNullTime => Time ?? DateTime.MinValue;
-		internal double NonNullElevation => Elevation ?? 0;
+		/// <summary>
+		/// Gets the time or DateTime.MinValue if it doesn't exist.
+		/// </summary>
+		public DateTime TimeValue => Time ?? DateTime.MinValue;
+
+		/// <summary>
+		/// Gets the elevation or 0 if it doesn't exist.
+		/// </summary>
+		public double ElevationValue => Elevation ?? 0;
 	}
 }
