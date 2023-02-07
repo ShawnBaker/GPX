@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;netstandard2.0;net472;net45</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>GPX</Title>
+    <Title>Gpx</Title>
     <Description>Reads and writes GPX files.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/ShawnBaker/Gpx</RepositoryUrl>
@@ -26,6 +26,7 @@ Added the "List" suffix to all List&lt;&gt; class names.</PackageReleaseNotes>
   <ItemGroup>
     <None Remove=".gitignore" />
     <None Remove="gpx.png" />
+	  <None Remove="LICENSE" />
     <None Remove="README.md" />
   </ItemGroup>
 
@@ -33,25 +34,18 @@ Added the "List" suffix to all List&lt;&gt; class names.</PackageReleaseNotes>
     <Content Include="gpx.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
     <Content Include="LICENSE">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
     <Content Include="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
   </ItemGroup>
 
 </Project>
