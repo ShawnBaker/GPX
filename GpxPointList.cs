@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace FrozenNorth.Gpx
 {
@@ -115,11 +116,11 @@ namespace FrozenNorth.Gpx
 		public double ElevationRange => GetElevationRange(out _, out _);
 
 		/// <summary>
-		/// Calculates the distance between two GPS corordinates.
+		/// Calculates the distance between two GPS corordinates in kilometers.
 		/// </summary>
 		/// <param name="point1">First GPS coordinate.</param>
 		/// <param name="point2">Second GPS coordinate.</param>
-		/// <returns>The distance between the two GPS corordinates.</returns>
+		/// <returns>The distance between the two GPS corordinates in kilometers.</returns>
 		public static double DistanceBetweenPoints(GpxPoint point1, GpxPoint point2)
 		{
 			var earthRadiusKm = 6371;
@@ -145,6 +146,16 @@ namespace FrozenNorth.Gpx
 		public GpxPointList GetReducedElevationPoints(double tolerance = 0.5)
 		{
 			return DouglasPeucker.Reduce(this, tolerance, ElevationDistance);
+		}
+
+		/// <summary>
+		/// Gets enough points to draw a map.
+		/// </summary>
+		/// <param name="tolerance">Tolerance (between 0 and 1) to use with the Douglas Peucker algorithm.</param>
+		/// <returns>List of points.</returns>
+		public GpxPointList GetReducedLocationPoints(double tolerance = 0.5)
+		{
+			return DouglasPeucker.Reduce(this, tolerance, LocationDistance);
 		}
 
 		/// <summary>
@@ -209,8 +220,19 @@ namespace FrozenNorth.Gpx
 			double area = Math.Abs(.5 * (point1.ElevationValue * time2 + point2.ElevationValue * time + point.ElevationValue * time1 -
 									point2.ElevationValue * time1 - point.ElevationValue * time2 - point1.ElevationValue * time));
 			double bottom = Math.Sqrt(Math.Pow(point1.ElevationValue - point2.ElevationValue, 2) + Math.Pow(time1 - time2, 2));
-			double height = area / bottom * 2;
-			return height;
+			return area / bottom * 2;
+		}
+
+		/// <summary>
+		/// Used by the Douglas Peucker algorithm to compare elevation points.
+		/// </summary>
+		private double LocationDistance(GpxPoint point1, GpxPoint point2, GpxPoint point)
+		{
+			double area = Math.Abs(.5 * (point1.Latitude * point2.Longitude + point2.Latitude * point.Longitude +
+										point.Latitude * point1.Longitude - point2.Latitude * point1.Longitude -
+										point.Latitude * point2.Longitude - point1.Latitude * point.Longitude));
+			double bottom = Math.Sqrt(Math.Pow(point1.Latitude - point2.Latitude, 2) + Math.Pow(point1.Longitude - point2.Longitude, 2));
+			return area / bottom * 2;
 		}
 
 		/// <summary>
