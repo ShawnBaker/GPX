@@ -40,6 +40,17 @@ namespace FrozenNorth.Gpx
 		/// </summary>
 		/// <param name="latitude">Latitude.</param>
 		/// <param name="longitude">Longitude.</param>
+		public GpxPoint(double latitude, double longitude)
+		{
+			Latitude = latitude;
+			Longitude = longitude;
+		}
+
+		/// <summary>
+		/// Creates a point from values.
+		/// </summary>
+		/// <param name="latitude">Latitude.</param>
+		/// <param name="longitude">Longitude.</param>
 		/// <param name="elevation">Elevation.</param>
 		/// <param name="time">Time.</param>
 		/// <param name="fix">Fix.</param>
